@@ -15,10 +15,18 @@ public class BeerRouterConfig {
 
     public static final String BEER_V2_URL = "/api/v2/beer";
     public static final String BEER_V2_URL_ID = "/api/v2/beer/{beerId}";
+    public static final String BEER_V2_UPC_URL = "api/v1/beerUpc";
+    public static final String BEER_V2_UPC_URL_UPC = "api/v1/beerUpc/{upc}";
 
     @Bean
     public RouterFunction<ServerResponse> beerRoutesV2(BeerHandlerV2 handler) {
         return route().GET(BEER_V2_URL_ID, accept(APPLICATION_JSON), handler::getBeerById)
+                .build();
+    }
+
+    @Bean
+    public RouterFunction<ServerResponse> beerRoutesV2Upc(BeerHandlerV2 handler) {
+        return route().GET(BEER_V2_UPC_URL_UPC, accept(APPLICATION_JSON), handler::getBeerByUpc)
                 .build();
     }
 }
