@@ -39,6 +39,99 @@ public class WebClientV2IT {
     }
 
     @Test
+    void testSaveBeer() throws InterruptedException {
+
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+
+        BeerDto beerDto = BeerDto.builder()
+                .beerName("JTs Beer")
+                .upc("1233455")
+                .beerStyle("PALE_ALE")
+                .price(new BigDecimal("8.99"))
+                .build();
+
+        Mono<ResponseEntity<Void>> beerResponseMono = webClient.post().uri(BeerRouterConfig.BEER_V2_URL)
+                .accept(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(beerDto))
+                .retrieve().toBodilessEntity();
+
+        beerResponseMono.publishOn(Schedulers.parallel()).subscribe(responseEntity -> {
+
+            assertThat(responseEntity.getStatusCode().is2xxSuccessful());
+
+            countDownLatch.countDown();
+        });
+
+        countDownLatch.await(1000, TimeUnit.MILLISECONDS);
+        assertThat(countDownLatch.getCount()).isEqualTo(0);
+    }
+
+    @Test
+    void testSaveBeerBadRequest() throws InterruptedException {
+
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+
+        BeerDto beerDto = BeerDto.builder()
+                .price(new BigDecimal("8.99"))
+                .build();
+
+        Mono<ResponseEntity<Void>> beerResponseMono = webClient.post().uri(BeerRouterConfig.BEER_V2_URL)
+                .accept(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(beerDto))
+                .retrieve().toBodilessEntity();
+
+        beerResponseMono.subscribe(responseEntity -> {
+
+        }, throwable -> {
+            if (throwable.getClass().getName().equals("org.springframework.web.reactive.function.client.WebClientResponseException$BadRequest")){
+                WebClientResponseException ex = (WebClientResponseException) throwable;
+
+                if (ex.getStatusCode().equals(HttpStatus.BAD_REQUEST)){
+                    countDownLatch.countDown();
+                }
+            }
+        });
+
+        countDownLatch.await(2000, TimeUnit.MILLISECONDS);
+        assertThat(countDownLatch.getCount()).isEqualTo(0);
+    }
+
+    @Test
+    void getBeerByUPC() throws InterruptedException {
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+
+        Mono<BeerDto> beerDtoMono = webClient.get().uri(BeerRouterConfig.BEER_V2_URL_UPC + "/" + BeerLoader.BEER_2_UPC)
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve().bodyToMono(BeerDto.class);
+
+        beerDtoMono.subscribe(beer -> {
+            assertThat(beer).isNotNull();
+            assertThat(beer.getBeerName()).isNotNull();
+
+            countDownLatch.countDown();
+        });
+
+        countDownLatch.await(2000, TimeUnit.MILLISECONDS);
+        assertThat(countDownLatch.getCount()).isEqualTo(0);
+    }
+
+    @Test
+    void getBeerByUpcNotFound() throws InterruptedException {
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+
+        Mono<BeerDto> beerDtoMono = webClient.get().uri(BeerRouterConfig.BEER_V2_URL_UPC + "/" + "1333")
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve().bodyToMono(BeerDto.class);
+
+        beerDtoMono.subscribe(beer -> {
+
+        }, throwable -> {
+            countDownLatch.countDown();
+        });
+
+        countDownLatch.await(2000, TimeUnit.MILLISECONDS);
+        assertThat(countDownLatch.getCount()).isEqualTo(0);
+    }
+
+    @Test
     void getBeerById() throws InterruptedException {
         CountDownLatch countDownLatch = new CountDownLatch(1);
 
@@ -62,43 +155,6 @@ public class WebClientV2IT {
         CountDownLatch countDownLatch = new CountDownLatch(1);
 
         Mono<BeerDto> beerDtoMono = webClient.get().uri(BeerRouterConfig.BEER_V2_URL + "/" + 1333)
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve().bodyToMono(BeerDto.class);
-
-        beerDtoMono.subscribe(beer -> {
-
-        }, throwable -> {
-            countDownLatch.countDown();
-        });
-
-        countDownLatch.await(2000, TimeUnit.MILLISECONDS);
-        assertThat(countDownLatch.getCount()).isEqualTo(0);
-    }
-
-    @Test
-    void getBeerByUpc() throws InterruptedException {
-        CountDownLatch countDownLatch = new CountDownLatch(1);
-
-        Mono<BeerDto> beerDtoMono = webClient.get().uri(BeerRouterConfig.BEER_V2_UPC_URL + "/" + BeerLoader.BEER_1_UPC)
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve().bodyToMono(BeerDto.class);
-
-        beerDtoMono.subscribe(beer -> {
-            assertThat(beer).isNotNull();
-            assertThat(beer.getBeerName()).isNotNull();
-
-            countDownLatch.countDown();
-        });
-
-        countDownLatch.await(2000, TimeUnit.MILLISECONDS);
-        assertThat(countDownLatch.getCount()).isEqualTo(0);
-    }
-
-    @Test
-    void getBeerByUpcNotFound() throws InterruptedException {
-        CountDownLatch countDownLatch = new CountDownLatch(1);
-
-        Mono<BeerDto> beerDtoMono = webClient.get().uri(BeerRouterConfig.BEER_V2_UPC_URL + "/" + "1333")
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve().bodyToMono(BeerDto.class);
 
