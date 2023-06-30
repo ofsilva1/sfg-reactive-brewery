@@ -56,7 +56,7 @@ public class WebClientIT {
 
                     BeerDto beerDto = pagedList.getContent().get(0);
 
-                    webClient.delete().uri("/api/v1/beer" + beerDto.getId())
+                    webClient.delete().uri("/api/v1/beer/" + beerDto.getId())
                             .retrieve().toBodilessEntity()
                             .flatMap(responseEntity -> {
                                 countDownLatch.countDown();

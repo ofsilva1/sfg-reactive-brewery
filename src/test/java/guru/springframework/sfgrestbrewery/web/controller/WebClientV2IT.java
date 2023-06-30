@@ -3,7 +3,6 @@ package guru.springframework.sfgrestbrewery.web.controller;
 import guru.springframework.sfgrestbrewery.bootstrap.BeerLoader;
 import guru.springframework.sfgrestbrewery.web.functional.BeerRouterConfig;
 import guru.springframework.sfgrestbrewery.web.model.BeerDto;
-import guru.springframework.sfgrestbrewery.web.model.BeerPagedList;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
